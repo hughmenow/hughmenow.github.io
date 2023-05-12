@@ -1,1 +1,1 @@
-Sitemap: https://knhash.in/jekyllBear/sitemap.xml
+Sitemap: https://hughmenow.github.io/sitemap.xml
