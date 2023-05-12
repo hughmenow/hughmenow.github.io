@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://knhash.in/jekyllBear/feed.xml" rel="self" type="application/atom+xml" /><link href="https://knhash.in/jekyllBear/" rel="alternate" type="text/html" /><updated>2023-05-11T20:40:49-04:00</updated><id>https://knhash.in/jekyllBear/feed.xml</id><title type="html">Hugh Garnier de Blog</title><subtitle>Linux user and software/system security researcher blog website</subtitle><author><name>Hugh Garnier</name></author><entry><title type="html">The Impact of Database Schema Changes</title><link href="https://knhash.in/jekyllBear/the-impact-of-database-schema-changes" rel="alternate" type="text/html" title="The Impact of Database Schema Changes" /><published>2023-02-17T12:56:00-04:00</published><updated>2023-02-17T12:56:00-04:00</updated><id>https://knhash.in/jekyllBear/the-impact-of-database-schema-changes</id><content type="html" xml:base="https://knhash.in/jekyllBear/the-impact-of-database-schema-changes"><![CDATA[<p>Once upon a time, I was tasked with improving the performance of a PostgreSQL database for a client. After analyzing the database, I found that the database schema was poorly designed and that it was the root cause of the performance issues. I suggested changing the database schema to the client, but they were hesitant about making such significant changes to their database. To convince them, I had to demonstrate how changing the database schema could improve the overall performance.</p>
+
+<p>The first change I made was to denormalize some of the tables. Denormalization is a technique where redundant data is added to a table to improve query performance. In the original database schema, there were two tables, one for customers and one for orders. When a query was executed to fetch all orders for a particular customer, the database had to perform a join between the two tables. This was a time-consuming operation and caused the database to slow down. To improve the performance, I denormalized the orders table and added the customer information to it. This reduced the number of joins required and improved the query performance significantly.</p>
+
+<p>Here is the SQL code for denormalizing the orders table:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">ALTER</span> <span class="k">TABLE</span> <span class="n">orders</span> <span class="k">ADD</span> <span class="k">COLUMN</span> <span class="n">customer_name</span> <span class="nb">TEXT</span><span class="p">;</span>
+
+<span class="k">UPDATE</span> <span class="n">orders</span> <span class="k">SET</span> <span class="n">customer_name</span> <span class="o">=</span> <span class="n">customers</span><span class="p">.</span><span class="n">name</span>
+<span class="k">FROM</span> <span class="n">customers</span>
+<span class="k">WHERE</span> <span class="n">orders</span><span class="p">.</span><span class="n">customer_id</span> <span class="o">=</span> <span class="n">customers</span><span class="p">.</span><span class="n">id</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>The second change I made was to split large tables into smaller ones. In the original database schema, there was a single table that contained all the orders. This table was massive, and querying it was time-consuming. To improve the performance, I split the orders table into smaller tables based on the order date. This way, queries could be run on smaller tables, which improved the performance.</p>
+
+<p>Here is the SQL code for splitting the orders table:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">orders_2020</span> <span class="p">(</span>
+    <span class="n">id</span> <span class="nb">SERIAL</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span>
+    <span class="n">customer_id</span> <span class="nb">INTEGER</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+    <span class="n">order_date</span> <span class="nb">DATE</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+    <span class="p">...</span>
+<span class="p">);</span>
+
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">orders_2021</span> <span class="p">(</span>
+    <span class="n">id</span> <span class="nb">SERIAL</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span>
+    <span class="n">customer_id</span> <span class="nb">INTEGER</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+    <span class="n">order_date</span> <span class="nb">DATE</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+    <span class="p">...</span>
+<span class="p">);</span>
+</code></pre></div></div>
+
+<p>The third change I made was to use indexes on frequently queried columns. In the original database schema, there were no indexes, which meant that queries had to scan the entire table to find the required data. To improve the performance, I added indexes to the frequently queried columns. This reduced the query execution time and improved the overall performance.</p>
+
+<p>Here is the SQL code for adding indexes:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">INDEX</span> <span class="n">orders_customer_id_idx</span> <span class="k">ON</span> <span class="n">orders</span> <span class="p">(</span><span class="n">customer_id</span><span class="p">);</span>
+<span class="k">CREATE</span> <span class="k">INDEX</span> <span class="n">orders_order_date_idx</span> <span class="k">ON</span> <span class="n">orders</span> <span class="p">(</span><span class="n">order_date</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>While making these changes, I had to ensure that I did not break any of the existing functionality of the database. Therefore, I tested each change thoroughly and made sure that all existing queries and applications continued to work as expected.</p>
+
+<p>After implementing the changes to the database schema, I performed several performance tests to compare the before and after performance of the database. The results were impressive. The query time for some of the most frequently executed queries had decreased by more than 50%. The overall database performance had improved, and the client was pleased with the results.</p>
+
+<p>However, while making these changes, I also noticed that changing the database schema could sometimes have an adverse effect on performance. For example, I had previously worked on a project where a table had been denormalized to improve query performance. However, this had resulted in an increased number of writes to the database and had slowed down the application. This was because, in a denormalized table, data was stored redundantly, and updating the table required updating the redundant data as well. This had led to a slowdown in the application and an increase in the database size.</p>
+
+<p>Another issue I had encountered in the past was when a table was split into smaller tables, and indexes were added to frequently queried columns. While this had improved the performance of the queries, it had also resulted in an increase in the size of the database. This was because indexes take up space in the database, and adding too many indexes can cause the database size to balloon.</p>
+
+<p>To avoid these issues, it is important to carefully analyze the database schema and understand the application’s requirements before making any changes. It is also essential to test the changes thoroughly before implementing them in a production environment.</p>
+
+<p>In addition to the changes I had made to the database schema, there are other techniques that can be used to improve PostgreSQL database performance. These include tuning the PostgreSQL configuration settings, optimizing queries, and using connection pooling. However, in my experience, changing the database schema is one of the most effective ways to improve database performance.</p>
+
+<p>To summarize, changing the database schema can have a significant impact on the performance of a PostgreSQL database. By denormalizing tables, splitting large tables into smaller ones, and using indexes on frequently queried columns, the performance of the database can be improved significantly. However, it is important to carefully analyze the database schema, test each change thoroughly, and avoid making changes that may have an adverse effect on performance. By following these best practices, you can optimize the performance of your PostgreSQL database and ensure that it meets the needs of your application.</p>]]></content><author><name>Hugh Garnier</name></author><category term="posgresql" /><category term="performance" /><category term="schema" /><summary type="html"><![CDATA[Once upon a time, I was tasked with improving the performance of a PostgreSQL database for a client. After analyzing the database, I found that the database schema was poorly designed and that it was the root cause of the performance issues. I suggested changing the database schema to the client, but they were hesitant about making such significant changes to their database. To convince them, I had to demonstrate how changing the database schema could improve the overall performance.]]></summary></entry><entry><title type="html">Tools for PostgreSQL Schema Managements</title><link href="https://knhash.in/jekyllBear/tools-for-postgresql-schema-managements" rel="alternate" type="text/html" title="Tools for PostgreSQL Schema Managements" /><published>2023-02-05T13:20:00-04:00</published><updated>2023-02-05T13:20:00-04:00</updated><id>https://knhash.in/jekyllBear/tools-for-postgresql-schema-managements</id><content type="html" xml:base="https://knhash.in/jekyllBear/tools-for-postgresql-schema-managements"><![CDATA[<p>The article titled <a href="https://www.sisson.ru/managing-database-schema-changes-efficiently.php">Managing Database Schema Changes Efficiently</a> raises a critical issue in software development - managing database schema changes. As a software developer, I have come across this problem on multiple occasions, and I agree with the author’s perspective on the subject.</p>
+
+<p>In today’s fast-paced software development industry, changes in database schema are a common occurrence. However, these changes can be challenging to manage, especially when multiple developers are working on the same project. It is, therefore, essential to have a streamlined process for managing database schema changes.</p>
+
+<p>One approach suggested in the article is to use a version control system such as Git to manage changes to the database schema. This approach ensures that changes to the schema are tracked, and the history of the changes is maintained. This is a good practice and one that I have used in the past.</p>
+
+<p>Another useful approach suggested in the article is to use a database migration tool to manage database schema changes. These tools enable developers to write scripts that make changes to the database schema and track the changes made. The advantage of using a migration tool is that the changes can be applied in a controlled manner, and developers can easily roll back changes if required.</p>
+
+<p>One database <a href="https://www.sisson.ru/managing-database-schema-changes-efficiently.php#rdbm">migration tool</a> that I have adopted after reading the article mentioned is Schema Guard. It is a database migration tool that allows developers to manage database schema changes using SQL scripts. It tracks the changes made to the database schema and ensures that the changes are applied in the correct order.</p>
+
+<p>Here is an example of how Schema Guard can be used to manage database schema changes:</p>
+
+<p>Assume we have a table named “customer” with the following schema:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">customer</span> <span class="p">(</span>
+    <span class="n">id</span> <span class="nb">SERIAL</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span>
+    <span class="n">name</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+    <span class="n">email</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span> <span class="k">UNIQUE</span> <span class="k">NOT</span> <span class="k">NULL</span>
+<span class="p">);</span>
+</code></pre></div></div>
+
+<p>Now, let’s say we want to add a new column called “address” to the “customer” table. We can do this using the following SQL script:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">ALTER</span> <span class="k">TABLE</span> <span class="n">customer</span> <span class="k">ADD</span> <span class="k">COLUMN</span> <span class="n">address</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>We can save this SQL script in a file named “V1__Add_address_to_customer_table.sql”. The “V1” prefix indicates that this is the first version of the database schema. We can then use the app to apply this change to the database schema by running the following command:</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rdbm migrate
+</code></pre></div></div>
+
+<p>This will apply the changes to the database schema, and Schema Guard will update its metadata table to record that the “V1” script has been applied.</p>
+
+<p>Now, let’s say we want to make another change to the database schema by adding a new table named “orders.” We can create a new SQL script with the following code:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">orders</span> <span class="p">(</span>
+    <span class="n">id</span> <span class="nb">SERIAL</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span> 
+    <span class="n">customer_id</span> <span class="nb">INTEGER</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span> 
+    <span class="n">order_date</span> <span class="nb">DATE</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span> 
+    <span class="n">total_amount</span> <span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span> 
+    <span class="k">FOREIGN</span> <span class="k">KEY</span> <span class="p">(</span><span class="n">customer_id</span><span class="p">)</span> <span class="k">REFERENCES</span> <span class="n">customer</span><span class="p">(</span><span class="n">id</span><span class="p">)</span>
+<span class="p">);</span>
+</code></pre></div></div>
+
+<p>We can save this SQL script in a file named “V2__Create_orders_table.sql”. The “V2” prefix indicates that this is the second version of the database schema. We can then use Schema Guard to apply this change to the database schema by running the following command:</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rdbm migrate
+</code></pre></div></div>
+
+<p>This will apply the changes to the database schema and update tool’s metadata table to record that the “V2” script has been applied.</p>
+
+<p>As we continue to make changes to the database schema, we can create new SQL scripts and apply them using Schema Guard. It will ensure that the changes are applied in the correct order and that the history of the changes is maintained.</p>
+
+<p>Another important concept to consider when managing database schema changes efficiently is version control. Just as code changes are tracked and managed through version control systems such as Git, database schema changes should also be managed in a similar way.</p>
+
+<p>Other way to accomplish version control for database schema changes is to use tools such as Liquibase or Flyway. These tools allow you to define the database schema as code, in the form of XML, YAML or SQL files, and track changes made to the schema over time. They also provide mechanisms for migrating the schema from one version to another and managing rollbacks if necessary.</p>
+
+<p>For example, let’s say we have a table called “users” with the following schema:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">users</span> <span class="p">(</span>
+    <span class="n">id</span> <span class="nb">SERIAL</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span>
+    <span class="n">name</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+    <span class="n">email</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+    <span class="n">password</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span>
+<span class="p">);</span>
+</code></pre></div></div>
+
+<p>If we need to add a new column to this table, such as “phone_number”, we can create a new Liquibase changelog file called “001_add_phone_number_column.xml” with the following contents:</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;changeSet</span> <span class="na">author=</span><span class="s">"me"</span> <span class="na">id=</span><span class="s">"add_phone_number_column"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;addColumn</span> <span class="na">tableName=</span><span class="s">"users"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;column</span> <span class="na">name=</span><span class="s">"phone_number"</span> <span class="na">type=</span><span class="s">"varchar(255)"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/addColumn&gt;</span>
+<span class="nt">&lt;/changeSet&gt;</span>
+</code></pre></div></div>
+
+<p>We can then run Liquibase to apply this change to the database, and it will keep track of the fact that this change has been applied. If we need to roll back this change, we can simply run the tool with the “rollback” command, and Liquibase will automatically generate the SQL necessary to undo the change.</p>
+
+<p>Another advantage of using version control for database schema changes is that it makes it easier to collaborate with other developers. Just as multiple developers can work on the same codebase simultaneously using Git, multiple developers can also work on the same database schema simultaneously.</p>
+
+<p>In conclusion, managing database schema changes efficiently is critical to the success of any software project that relies on a database. By following best practices such as using a migration tool, version control, and testing, we can ensure that our database schema changes are made in a controlled and predictable way, with minimal disruption to our applications.</p>]]></content><author><name>Hugh Garnier</name></author><category term="posgresql" /><category term="schema" /><category term="migration" /><summary type="html"><![CDATA[The article titled Managing Database Schema Changes Efficiently raises a critical issue in software development - managing database schema changes. As a software developer, I have come across this problem on multiple occasions, and I agree with the author’s perspective on the subject.]]></summary></entry><entry><title type="html">Boosting PostgreSQL Performance</title><link href="https://knhash.in/jekyllBear/boosting-postgresql-performance" rel="alternate" type="text/html" title="Boosting PostgreSQL Performance" /><published>2023-01-22T14:34:00-04:00</published><updated>2023-01-22T14:34:00-04:00</updated><id>https://knhash.in/jekyllBear/boosting-postgresql-performance</id><content type="html" xml:base="https://knhash.in/jekyllBear/boosting-postgresql-performance"><![CDATA[<p>As a database architect, I’ve worked with a wide range of database systems over the years, and one of my favorites is PostgreSQL. PostgreSQL is a powerful and flexible database system that’s well-suited to a variety of applications, from small-scale web applications to large-scale enterprise systems.</p>
+
+<p>One of the key strengths of PostgreSQL is its ability to be tuned for optimal performance. By carefully optimizing the database schema and configuration settings, it’s possible to achieve lightning-fast performance that can help your applications scale to meet the needs of even the most demanding workloads.</p>
+
+<p>In this article, I’ll share some of my top tips for optimizing PostgreSQL database performance by tuning the database schema. Specifically, I’ll cover three areas of focus: table design, indexing, and query optimization. By following these tips, you’ll be well on your way to achieving optimal performance from your PostgreSQL database.</p>
+
+<h2 id="table-design">Table Design</h2>
+
+<p>The design of your database tables can have a significant impact on performance, so it’s important to take care when designing your schema. Here are a few tips to keep in mind:</p>
+
+<p>Normalize your tables: Normalization is the process of organizing data in a database to reduce redundancy and improve data integrity. By properly normalizing your tables, you can reduce the amount of disk space required for your database and improve performance by minimizing the number of table joins required to fetch data.</p>
+
+<p>Use appropriate data types: Choosing the right data types for your columns can help improve performance and reduce storage requirements. For example, using smaller integer types instead of larger ones can reduce the amount of storage required for your data, which can help improve performance.</p>
+
+<p>Avoid excessive column use: It’s tempting to add lots of columns to your tables, but be careful not to go overboard. Having too many columns in a table can slow down queries and increase disk space requirements. Instead, try to keep your tables lean and focused on a specific set of data.</p>
+
+<h2 id="indexing">Indexing</h2>
+
+<p>Proper indexing is critical to achieving optimal performance from your PostgreSQL database. Here are a few tips to keep in mind when creating indexes:</p>
+
+<p>Use the right type of index: PostgreSQL supports several types of indexes, including B-tree, hash, and GiST indexes. Each type of index is optimized for a different type of query, so it’s important to choose the right type of index for your specific needs.</p>
+
+<p>Index frequently-queried columns: By indexing frequently-queried columns, you can improve query performance and reduce the amount of time required to fetch data.</p>
+
+<p>Don’t over-index: While it’s important to index frequently-queried columns, be careful not to over-index. Too many indexes can slow down insert and update operations and increase disk space requirements.</p>
+
+<h2 id="query-optimization">Query Optimization</h2>
+
+<p>Finally, query optimization is an important part of achieving optimal performance from your PostgreSQL database. Here are a few tips to keep in mind when optimizing your queries:</p>
+
+<p>Use the EXPLAIN command: The EXPLAIN command can help you understand how PostgreSQL is executing your queries and identify areas for optimization.</p>
+
+<p>Use subqueries and CTEs: Subqueries and Common Table Expressions (CTEs) can help simplify complex queries and improve performance by reducing the number of joins required to fetch data.</p>
+
+<p>Avoid expensive operations: Certain operations, such as sorting and aggregation, can be expensive in terms of both time and resources. Whenever possible, try to avoid these operations or use them sparingly.</p>
+
+<p>Let’s take a look at some examples of how these tips can be applied in practice.</p>
+
+<h3 id="example-1-normalizing-tables">Example 1: Normalizing Tables</h3>
+
+<p>Consider a hypothetical e-commerce application that has a database table for storing order information. The initial design of the table looks like this:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">orders</span> <span class="p">(</span>
+    <span class="n">order_id</span> <span class="nb">SERIAL</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span> 
+    <span class="n">customer_name</span> <span class="nb">TEXT</span><span class="p">,</span> 
+    <span class="n">customer_email</span> <span class="nb">TEXT</span><span class="p">,</span> 
+    <span class="n">product_name</span> <span class="nb">TEXT</span><span class="p">,</span> 
+    <span class="n">product_description</span> <span class="nb">TEXT</span>
+<span class="p">);</span>
+</code></pre></div></div>
+
+<p>As you can see, this table is not fully normalized. There is a lot of redundancy, as the customer information is repeated for every order they place. This can result in a lot of wasted disk space and can slow down queries that need to join the orders table with other tables.</p>
+
+<p>To normalize this table, we can create separate tables for customers and products and link them to the orders table using foreign keys. Here’s what the revised schema might look like:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">customers</span> <span class="p">(</span>
+    <span class="n">customer_id</span> <span class="nb">SERIAL</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span> 
+    <span class="n">customer_name</span> <span class="nb">TEXT</span><span class="p">,</span> <span class="n">customer_email</span> <span class="nb">TEXT</span>
+<span class="p">);</span>
+
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">products</span> <span class="p">(</span>
+    <span class="n">product_id</span> <span class="nb">SERIAL</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span> 
+    <span class="n">product_name</span> <span class="nb">TEXT</span><span class="p">,</span> 
+    <span class="n">product_price</span> <span class="nb">NUMERIC</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="p">);</span> 
+
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">orders</span> <span class="p">(</span>
+    <span class="n">order_id</span> <span class="nb">SERIAL</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span> 
+    <span class="n">customer_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">customers</span> <span class="p">(</span><span class="n">customer_id</span><span class="p">),</span> 
+    <span class="n">product_id</span> <span class="nb">INTEGER</span> <span class="k">REFERENCES</span> <span class="n">products</span> <span class="p">(</span><span class="n">product_id</span><span class="p">),</span> 
+    <span class="n">quantity</span> <span class="nb">INTEGER</span><span class="p">,</span> 
+    <span class="n">order_date</span> <span class="nb">TIMESTAMP</span>
+<span class="p">);</span>
+</code></pre></div></div>
+<p>As you can see, we’ve created separate tables for customers and products and linked them to the orders table using foreign keys. This eliminates redundancy and makes it easier to query and join data across multiple tables.</p>
+
+<h3 id="example-2-indexing-frequently-queried-columns">Example 2: Indexing Frequently-Queried Columns</h3>
+
+<p>Consider a hypothetical database for a social media application that has a table for storing user posts. The table includes columns for the post ID, the user ID of the person who made the post, the text of the post, and the timestamp of when the post was made.</p>
+
+<p>If we frequently need to query posts by user ID, it makes sense to create an index on the user_id column. Here’s an example of how to create the index:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">INDEX</span> <span class="n">idx_user_id</span> <span class="k">ON</span> <span class="n">posts</span> <span class="p">(</span><span class="n">user_id</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>This will create a B-tree index on the user_id column, which can significantly speed up queries that filter by user ID.</p>
+
+<h3 id="example-3-using-subqueries-and-ctes">Example 3: Using Subqueries and CTEs</h3>
+
+<p>Consider a hypothetical database for a blog application that has a table for storing blog posts and a table for storing comments on those posts. Suppose we want to retrieve a list of all blog posts along with the number of comments on each post.</p>
+
+<p>One way to do this is with a subquery:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">SELECT</span> 
+    <span class="n">posts</span><span class="p">.</span><span class="o">*</span><span class="p">,</span> 
+    <span class="p">(</span><span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">comments</span> <span class="k">WHERE</span> <span class="n">post_id</span> <span class="o">=</span> <span class="n">posts</span><span class="p">.</span><span class="n">post_id</span><span class="p">)</span> <span class="k">AS</span> <span class="n">comment_count</span> 
+<span class="k">FROM</span> 
+    <span class="n">posts</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>This subquery will count the number of comments for each post by filtering the comments table based on the post_id column.</p>
+
+<p>Another way to do this is with a Common Table Expression (CTE):</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">WITH</span> <span class="n">comment_counts</span> <span class="k">AS</span> <span class="p">(</span>
+    <span class="k">SELECT</span> <span class="n">post_id</span><span class="p">,</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">AS</span> <span class="k">count</span> <span class="k">FROM</span> <span class="n">comments</span> <span class="k">GROUP</span> <span class="k">BY</span> <span class="n">post_id</span>
+<span class="p">)</span> <span class="k">SELECT</span> 
+      <span class="n">posts</span><span class="p">.</span><span class="o">*</span><span class="p">,</span> 
+      <span class="n">comment_counts</span><span class="p">.</span><span class="k">count</span> <span class="k">AS</span> <span class="n">comment_count</span> 
+<span class="k">FROM</span> 
+    <span class="n">posts</span> <span class="k">LEFT</span> <span class="k">JOIN</span> <span class="n">comment_counts</span> <span class="k">ON</span> <span class="n">posts</span><span class="p">.</span><span class="n">post_id</span> <span class="o">=</span> <span class="n">comment_counts</span><span class="p">.</span><span class="n">post_id</span><span class="p">;</span>
+</code></pre></div></div>
+<p>This CTE first calculates the comment count for each post using a GROUP BY query, then joins the results of that query with the posts table to produce the final result set. This approach can be more efficient than using a subquery, particularly if you need to perform more complex calculations on the comment count data.</p>
+
+<p>By following these tips for optimizing PostgreSQL database performance by tuning the database schema, you’ll be well on your way to achieving optimal performance from your PostgreSQL database. Remember, performance tuning is an ongoing process, so be sure to monitor your database’s performance over time and make adjustments as needed to ensure that your applications are running smoothly and efficiently.</p>]]></content><author><name>Hugh Garnier</name></author><category term="posgresql" /><category term="performance" /><category term="schema" /><summary type="html"><![CDATA[As a database architect, I’ve worked with a wide range of database systems over the years, and one of my favorites is PostgreSQL. PostgreSQL is a powerful and flexible database system that’s well-suited to a variety of applications, from small-scale web applications to large-scale enterprise systems.]]></summary></entry><entry><title type="html">The Aftermath of Log4</title><link href="https://knhash.in/jekyllBear/the-aftermath-of-log4" rel="alternate" type="text/html" title="The Aftermath of Log4" /><published>2022-12-29T14:30:00-04:00</published><updated>2022-12-29T14:30:00-04:00</updated><id>https://knhash.in/jekyllBear/the-aftermath-of-log4</id><content type="html" xml:base="https://knhash.in/jekyllBear/the-aftermath-of-log4"><![CDATA[<p>It was a quiet afternoon when I received an urgent call from my colleague at previous work. He sounded alarmed and told me that there was a security issue with the Java log4j code that we had used in one of our old projects. I felt a chill run down my spine as I realized the gravity of the situation.</p>
+
+<p>We had used log4j version 1.2.17 in one of our projects a few years back. At that time, it was one of the most popular and widely used logging frameworks for Java. However, it was later discovered that this version had a critical security vulnerability that could allow remote code execution. This vulnerability was dubbed as <a href="https://nvd.nist.gov/vuln/detail/cve-2021-44228">CVE-2021-44228</a>.</p>
+
+<p>My colleague explained that a new exploit was discovered that could leverage this vulnerability and allow attackers to take over the server. This was a nightmare scenario for any software developer or IT professional. We had to act fast to mitigate the risk and protect our clients’ data.</p>
+
+<p>The first step was to check if any of our current projects were still using log4j version 1.2.17. We quickly realized that there were a few projects that were still using it, including the one we had developed a few years ago. We immediately started working on a plan to update the log4j version to the latest stable version.</p>
+
+<p>However, we soon realized that it was easier said than done. Updating the log4j version required a lot of changes in the code, and we had to ensure that the new version was compatible with our existing codebase. We had to make sure that the changes did not break any existing functionality or introduce new bugs. It was a time-consuming and complex process that required a lot of careful planning and testing.</p>
+
+<p>We spent the next few days working on the update, and it was a relief to see that it was successful. However, we also knew that there were many other old projects out there that were still vulnerable to the exploit. This was a problem that affected the entire industry, and it was not limited to just our projects.</p>
+
+<p>We knew that we had to spread the word and warn others about the security issue. We wrote a blog post and shared it on social media to raise awareness about the issue. Furthermore, we also contacted our clients and advised them to update their systems as soon as possible.</p>
+
+<p>The response was overwhelming. Many people thanked us for raising awareness about the issue, and some even asked for our help in updating their systems. It was heartening to see how the community came together to tackle this problem.</p>
+
+<p>However, the story doesn’t end there. We soon realized that updating the log4j version was just the first step. There were other dependencies and libraries that also needed to be updated to ensure that our systems were fully secure. It was a never-ending battle to stay ahead of the threats and protect our systems.</p>
+
+<p>In conclusion, the log4j vulnerability was a wake-up call for the entire software development community. It showed us the importance of keeping our systems up to date and being proactive in dealing with security threats. The incident also highlighted the need for better communication and collaboration between developers, IT professionals, and the wider community. It was a challenging time, but it also brought us together and reminded us of the importance of working together to overcome challenges.</p>]]></content><author><name>Hugh Garnier</name></author><category term="posgresql" /><category term="java" /><category term="log4j" /><summary type="html"><![CDATA[It was a quiet afternoon when I received an urgent call from my colleague at previous work. He sounded alarmed and told me that there was a security issue with the Java log4j code that we had used in one of our old projects. I felt a chill run down my spine as I realized the gravity of the situation.]]></summary></entry></feed>
